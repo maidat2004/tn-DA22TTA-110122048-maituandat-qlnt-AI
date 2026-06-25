@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { Plus, Edit, Trash2, Search, FileText, Calendar, DollarSign, CheckCircle } from 'lucide-react';
 import { contractService, tenantService, roomService } from '../../services';
 import { toast } from 'sonner';
+import { BACKEND_URL } from '../../config/api';
 
 export default function ContractManagement() {
   const [contracts, setContracts] = useState([]);
@@ -484,7 +485,7 @@ export default function ContractManagement() {
                   )}
                   {editingContract.contractFile && typeof editingContract.contractFile === 'string' && (
                     <p className="text-sm text-gray-600">
-                      File hiện tại: <a href={`http://localhost:5000${editingContract.contractFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem file</a>
+                      File hiện tại: <a href={`${BACKEND_URL}${editingContract.contractFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Xem file</a>
                     </p>
                   )}
                   {!editingContract.contractFile && (

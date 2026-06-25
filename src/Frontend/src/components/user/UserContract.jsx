@@ -6,6 +6,7 @@ import { Calendar, FileText, DollarSign, User, Home, CheckCircle, Clock, AlertCi
 import { contractService } from '../../services/contractService';
 import { tenantService } from '../../services/tenantService';
 import { toast } from 'sonner';
+import { BACKEND_URL } from '../../config/api';
 
 export default function UserContract() {
   const [contract, setContract] = useState(null);
@@ -214,7 +215,7 @@ export default function UserContract() {
               </div>
               {contract.contractFile && (
                 <Button
-                  onClick={() => window.open(`http://localhost:5000${contract.contractFile}`, '_blank')}
+                  onClick={() => window.open(`${BACKEND_URL}${contract.contractFile}`, '_blank')}
                   className="bg-blue-600 hover:bg-blue-700"
                   size="sm"
                 >
@@ -327,7 +328,7 @@ export default function UserContract() {
                   </div>
                 </div>
                 <a
-                  href={`http://localhost:5000${contract.contractFile}`}
+                  href={`${BACKEND_URL}${contract.contractFile}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -397,7 +398,7 @@ export default function UserContract() {
                 </div>
               </div>
               <Button
-                onClick={() => window.open(`http://localhost:5000${contract.contractFile}`, '_blank')}
+                onClick={() => window.open(`${BACKEND_URL}${contract.contractFile}`, '_blank')}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <FileText className="w-4 h-4 mr-2" />

@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 // Base URL cho API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Base URL của Backend (bỏ /api ở cuối)
+export const BACKEND_URL = API_URL.replace(/\/api\/?$/, '');
 
 // Tạo axios instance
 const api = axios.create({
