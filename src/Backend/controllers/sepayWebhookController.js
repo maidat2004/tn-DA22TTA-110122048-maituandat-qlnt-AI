@@ -11,31 +11,42 @@ const safeCompare = (left, right) => {
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 };
 
-const verifyApiKey = (req) => {
-  const expected = process.env.SEPAY_API_KEY;
-  if (!expected) return true;
+const verifyWebhook = (req, rawBody) => {
+  const expectedApiKey = process.env.SEPAY_API_KEY;
+  const expectedSecret = process.env.SEPAY_WEBHOOK_SECRET;
 
-  const auth = req.get('authorization') || '';
-  return safeCompare(auth, `Apikey ${expected}`);
-};
+  // Nếu không cấu hình phương thức bảo mật nào, cho phép đi qua
+  if (!expectedApiKey && !expectedSecret) return true;
 
-const verifyHmac = (req, rawBody) => {
-  const secret = process.env.SEPAY_WEBHOOK_SECRET;
-  if (!secret) return true;
+  const authHeader = req.get('authorization') || '';
+  const signatureHeader = req.get('x-sepay-signature') || '';
 
-  const signature = req.get('x-sepay-signature') || '';
-  const timestamp = req.get('x-sepay-timestamp') || '';
-  const timestampNumber = Number(timestamp);
+  // 1. Kiểm tra API Key (nếu có cấu hình API Key và có gửi header Authorization)
+  if (expectedApiKey && authHeader) {
+    if (safeCompare(authHeader, `Apikey ${expectedApiKey}`)) {
+      return true;
+    }
+  }
 
-  if (!signature || !timestampNumber) return false;
-  if (Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) > 300) return false;
+  // 2. Kiểm tra HMAC-SHA256 (nếu có cấu hình Secret và có gửi signature)
+  if (expectedSecret && signatureHeader) {
+    const timestamp = req.get('x-sepay-timestamp') || '';
+    const timestampNumber = Number(timestamp);
 
-  const expected = `sha256=${crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${rawBody}`)
-    .digest('hex')}`;
+    if (timestampNumber && Math.abs(Math.floor(Date.now() / 1000) - timestampNumber) <= 300) {
+      const expectedSignature = `sha256=${crypto
+        .createHmac('sha256', expectedSecret)
+        .update(`${timestamp}.${rawBody}`)
+        .digest('hex')}`;
+      
+      if (safeCompare(expectedSignature, signatureHeader)) {
+        return true;
+      }
+    }
+  }
 
-  return safeCompare(expected, signature);
+  // Nếu có cấu hình nhưng không khớp bất kỳ phương thức nào được gửi lên
+  return false;
 };
 
 const parseRawPayload = (req) => {
@@ -105,7 +116,7 @@ export const receiveSepayWebhook = async (req, res) => {
   try {
     const { rawBody, payload } = parseRawPayload(req);
 
-    if (!verifyApiKey(req) || !verifyHmac(req, rawBody)) {
+    if (!verifyWebhook(req, rawBody)) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
