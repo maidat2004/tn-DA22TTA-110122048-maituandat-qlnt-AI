@@ -24,6 +24,7 @@ import updateRequestRoutes from './routes/updateRequestRoutes.js';
 import recommendationRoutes from './routes/recommendationRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
 import sepayWebhookRoutes from './routes/sepayWebhookRoutes.js';
+import { startSepayCron } from './utils/sepayCron.js';
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +34,11 @@ const app = express();
 
 // Connect to MongoDB
 connectDB();
+
+// Khởi chạy tiến trình tự động đồng bộ giao dịch SePay (chạy nền mỗi 15 giây, chỉ chạy ở local/development)
+if (process.env.NODE_ENV === 'development') {
+  startSepayCron(15);
+}
 
 // Middleware
 app.use(cors());
@@ -58,8 +64,8 @@ app.use('/api/chatbot', chatbotRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'Server is running',
     timestamp: new Date().toISOString()
   });

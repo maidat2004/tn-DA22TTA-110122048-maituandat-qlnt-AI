@@ -38,7 +38,7 @@ const verifyWebhook = (req, rawBody) => {
         .createHmac('sha256', expectedSecret)
         .update(`${timestamp}.${rawBody}`)
         .digest('hex')}`;
-      
+
       if (safeCompare(expectedSignature, signatureHeader)) {
         return true;
       }
@@ -68,7 +68,7 @@ const extractInvoiceNumber = (payload) => {
     payload.code,
     payload.subAccount
   ];
-  
+
   for (const field of fields) {
     if (field) {
       const text = String(field).toUpperCase();
@@ -192,7 +192,7 @@ export const receiveSepayWebhook = async (req, res) => {
     if (transactionLog) {
       transactionLog.status = 'failed';
       transactionLog.reason = error.message;
-      await transactionLog.save().catch(() => {});
+      await transactionLog.save().catch(() => { });
     }
 
     return res.status(500).json({ success: false, message: error.message });

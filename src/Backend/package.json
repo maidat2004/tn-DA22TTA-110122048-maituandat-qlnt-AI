@@ -8,7 +8,9 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed": "node seeds/seed.js",
-    "seed:rooms": "node seeds/seedStudentRooms.js"
+    "seed:rooms": "node seeds/seedStudentRooms.js",
+    "sepay:sync": "node utils/sepayCron.js",
+    "sepay:cron": "node utils/sepayCron.js --watch"
   },
   "keywords": [
     "nodejs",

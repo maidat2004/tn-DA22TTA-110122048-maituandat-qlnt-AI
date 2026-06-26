@@ -1,7 +1,7 @@
 export const paymentInfo = {
   accountName: import.meta.env.VITE_PAYMENT_ACCOUNT_NAME || 'MAI TUAN DAT',
-  accountNumber: import.meta.env.VITE_PAYMENT_ACCOUNT_NUMBER || '1067635776',
-  bankName: import.meta.env.VITE_PAYMENT_BANK_NAME || 'Vietcombank',
+  accountNumber: import.meta.env.VITE_PAYMENT_ACCOUNT_NUMBER || '070136420729',
+  bankName: import.meta.env.VITE_PAYMENT_BANK_NAME || 'Sacombank',
   bankCode: import.meta.env.VITE_PAYMENT_BANK_CODE || import.meta.env.VITE_PAYMENT_BANK_BIN || 'Vietcombank',
   zaloPhone: import.meta.env.VITE_PAYMENT_ZALO || '0795473012'
 };

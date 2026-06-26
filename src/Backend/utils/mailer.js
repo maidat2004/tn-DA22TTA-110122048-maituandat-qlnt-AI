@@ -13,8 +13,8 @@ const createTransporter = () => {
 
 const paymentInfo = {
   accountName: process.env.PAYMENT_ACCOUNT_NAME || 'MAI TUAN DAT',
-  accountNumber: process.env.PAYMENT_ACCOUNT_NUMBER || '1067635776',
-  bankName: process.env.PAYMENT_BANK_NAME || 'Vietcombank',
+  accountNumber: process.env.PAYMENT_ACCOUNT_NUMBER || '070136420729',
+  bankName: process.env.PAYMENT_BANK_NAME || 'Sacombank',
   zaloPhone: process.env.PAYMENT_ZALO || '0795473012'
 };
 
@@ -165,8 +165,8 @@ const sendInvoiceEmail = async (toEmail, fullName, invoiceData) => {
             
             <table style="width: 100%; border-collapse: collapse;">
               <tbody>
-                ${invoiceData.services && invoiceData.services.length > 0 ? 
-                  invoiceData.services.map(service => `
+                ${invoiceData.services && invoiceData.services.length > 0 ?
+          invoiceData.services.map(service => `
                     <tr>
                       <td style="padding: 5px 0; border-bottom: 1px solid #e5e7eb;">
                         ${service.service?.name || 'Dịch vụ'} (${service.quantity} ${service.service?.unit || 'đơn vị'})
@@ -176,7 +176,7 @@ const sendInvoiceEmail = async (toEmail, fullName, invoiceData) => {
                       </td>
                     </tr>
                   `).join('') : ''
-                }
+        }
                 <tr style="font-weight: bold; background-color: #e5e7eb;">
                   <td style="padding: 10px 0;">Tổng cộng</td>
                   <td style="padding: 10px 0; text-align: right;">${formatCurrency(invoiceData.totalAmount)}</td>
@@ -216,11 +216,11 @@ Xin chào ${fullName},
 Hóa đơn thanh toán cho phòng ${invoiceData.room?.roomNumber || 'N/A'} tháng ${invoiceData.month}/${invoiceData.year} đã được tạo.
 
 Chi tiết hóa đơn:
-${invoiceData.services && invoiceData.services.length > 0 ? 
-  invoiceData.services.map(service => 
-    `- ${service.service?.name || 'Dịch vụ'}: ${formatCurrency(service.amount)}`
-  ).join('\n') : ''
-}
+${invoiceData.services && invoiceData.services.length > 0 ?
+          invoiceData.services.map(service =>
+            `- ${service.service?.name || 'Dịch vụ'}: ${formatCurrency(service.amount)}`
+          ).join('\n') : ''
+        }
 
 Tổng cộng: ${formatCurrency(invoiceData.totalAmount)}
 Hạn thanh toán: ${formatDate(invoiceData.dueDate)}

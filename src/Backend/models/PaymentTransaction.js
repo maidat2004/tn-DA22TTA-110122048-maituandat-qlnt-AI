@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const paymentTransactionSchema = new mongoose.Schema({
   sepayTransactionId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true,
     index: true
