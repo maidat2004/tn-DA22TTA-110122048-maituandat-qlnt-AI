@@ -98,7 +98,13 @@ const INTENTS = [
   },
   {
     id: 'contract',
-    keywords: ['hop dong', 'thu tuc', 'giay to', 'dang ky tam tru', 'cmnd', 'cccd', 'ky hop dong', 'thoi han hop dong', 'thoi han'],
+    keywords: [
+      'hop dong', 'thu tuc', 'giay to', 'dang ky tam tru', 'cmnd', 'cccd', 'ky hop dong', 
+      'thoi han hop dong', 'thoi han', 'thue phong nhu nao', 'thue phong nhu the nao', 
+      'quy trinh thue', 'quy trinh thue phong', 'thu tuc thue', 'thu tuc thue phong', 
+      'cac buoc thue', 'huong dan thue', 'muon thue thi lam sao', 'muon thue thi lam the nao', 
+      'dang ky thue nhu nao', 'dang ky thue nhu the nao', 'dang ky thue phong', 'lam sao de thue'
+    ],
     minScore: 1
   },
   {
@@ -225,6 +231,29 @@ const INTENTS = [
 
 // ─── Intent Scoring ──────────────────────────────────────────────────────────
 
+const PATTERN_INTENTS = [
+  { id: 'pet', regex: /nuoi\s*(cho|meo|thu\s*cung|vat\s*nuoi|dong\s*vat|chim)/ },
+  { id: 'curfew', regex: /gio\s*(giac|gioi\s*nghiem|tu\s*do|dong\s*cua|ra\s*vao|ve\s*muon)|di\s*ve\s*khuya|ve\s*muon|di\s*dem/ },
+  { id: 'security', regex: /an\s*(ninh|toan)|trom\s*cap|mat\s*(xe|mat|do)|camera|bao\s*ve/ },
+  { id: 'deposit', regex: /tien\s*coc|dat\s*coc|phi\s*coc|coc\s*phong|muc\s*coc/ },
+  { id: 'payment', regex: /thanh\s*toan|chuyen\s*khoan|ngay\s*5|dong\s*tien|tra\s*tien|ck|qr|hoa\s*don|han\s*dong|han\s*thanh\s*toan/ },
+  { id: 'contract', regex: /hop\s*dong|thu\s*tuc|giay\s*to|tam\s*tru|cmnd|cccd|dang\s*ky\s*thue|quy\s*trinh\s*thue|thue\s*phong\s*(nhu\s*the\s*nao|nhu\s*nao)|muon\s*thue|lam\s*sao\s*de\s*thue/ },
+  { id: 'guest', regex: /dan\s*ban|ban\s*be|ngu\s*lai|nguoi\s*than|nguoi\s*la|khach\s*o\s*lai|nguoi\s*o\s*them/ },
+  { id: 'repair', regex: /sua\s*chua|hu\s*hong|hong\s*hoc|bao\s*sua|yeu\s*cau\s*sua|bi\s*hong|bi\s*hu/ },
+  { id: 'room_view', regex: /xem\s*phong|coi\s*phong|hen\s*xem|lich\s*xem|di\s*xem/ },
+  { id: 'loft', regex: /gac\s*(lung|xep)|tang\s*lung|co\s*gac/ },
+  { id: 'contact', regex: /lien\s*he|so\s*dien\s*thoai|hotline|zalo|goi\s*dien|so\s*dt|lien\s*lac|nhan\s*tin/ },
+  { id: 'address', regex: /dia\s*chi|ban\s*do|google\s*map|o\s*dau|duong\s*di|vi\s*tri/ },
+  { id: 'electricity_price', regex: /gia\s*dien|tien\s*dien|phi\s*dien|so\s*dien|kwh/ },
+  { id: 'water_price', regex: /gia\s*nuoc|tien\s*nuoc|phi\s*nuoc|so\s*nuoc|khoi\s*nuoc/ },
+  { id: 'internet_price', regex: /gia\s*mang|phi\s*mang|tien\s*mang|wifi|internet|cuoc\s*mang/ },
+  { id: 'parking_price', regex: /gui\s*xe|phi\s*xe|tien\s*xe|giu\s*xe|cho\s*de\s*xe|bai\s*xe/ },
+  { id: 'all_services', regex: /phi\s*dich\s*vu|dich\s*vu|chi\s*phi\s*khac|cac\s*chi\s*phi|tong\s*phi/ },
+  { id: 'general_rules', regex: /noi\s*quy|quy\s*dinh\s*chung|luat\s*le|nguyen\s*tac/ },
+  { id: 'room_status_count', regex: /bao\s*nhieu\s*phong\s*trong|con\s*bao\s*nhieu\s*phong|so\s*phong\s*trong|tinh\s*trang\s*phong/ },
+  { id: 'amenities_overview', regex: /tien\s*(ich|nghi)|trang\s*thiet\s*bi|thiet\s*bi|co\s*san|trong\s*phong\s*co\s*gi/ }
+];
+
 /**
  * Phân tích câu hỏi, trả về danh sách {id, score} sắp xếp theo điểm giảm dần.
  * Phân tích từng token để tránh false positive khi có nhiều từ khóa chồng nhau.
@@ -234,9 +263,16 @@ const scoreIntents = (message) => {
   const joined = tokens.join(' ');
 
   return INTENTS.map((intent) => {
-    const score = countMatches(tokens, intent.keywords) +
+    let score = countMatches(tokens, intent.keywords) +
       // bonus for multi-word matches found in joined string
       intent.keywords.filter(kw => kw.includes(' ') && joined.includes(kw)).length;
+    
+    // Add big bonus (+10) if the normalized message matches the intent's regex pattern
+    const pattern = PATTERN_INTENTS.find(p => p.id === intent.id);
+    if (pattern && pattern.regex.test(joined)) {
+      score += 10;
+    }
+    
     return { id: intent.id, score };
   })
     .filter(i => i.score >= (INTENTS.find(x => x.id === i.id)?.minScore ?? 1))
@@ -711,7 +747,11 @@ const replyByIntent = async (intent, tiers, allRooms) => {
       return `Nhà trọ **không quy định giờ giới nghiêm**, giờ giấc đi lại hoàn toàn tự do.\n- Lối đi **riêng biệt**, không chung chủ\n- Cổng ra vào khóa **vân tay** – an toàn, thuận tiện đi về khuya\n\nBạn thoải mái đi học, làm thêm hay về muộn mà không lo ảnh hưởng ai.`;
 
     case 'contract':
-      return `Thủ tục thuê phòng:\n- Ký **hợp đồng thuê** thời hạn tối thiểu 6 tháng – 1 năm\n- Chuẩn bị **CMND/CCCD** bản gốc của tất cả người ở cùng\n- Chủ trọ sẽ hỗ trợ **đăng ký tạm trú** theo đúng quy định của địa phương`;
+      return `Quy trình và thủ tục thuê phòng tại nhà trọ Trang Thông:\n\n` +
+        `1. **Chọn phòng & Đặt lịch xem**: Bạn có thể xem danh sách phòng trống trực tiếp trên website này, sau đó liên hệ hotline/Zalo **${CONTACT_PHONE}** để hẹn lịch xem phòng thực tế.\n` +
+        `2. **Đặt cọc giữ phòng**: Tiền đặt cọc thông thường là **1 tháng tiền phòng** để giữ chỗ chắc chắn.\n` +
+        `3. **Ký hợp đồng thuê**: Thời hạn hợp đồng thuê phòng tối thiểu từ **6 tháng đến 1 năm**. Khi ký hợp đồng, bạn vui lòng chuẩn bị **CMND/CCCD** bản gốc của tất cả các thành viên ở cùng.\n` +
+        `4. **Nhận phòng & Đóng tiền**: Bạn sẽ đóng tiền phòng tháng đầu tiên khi nhận phòng để dọn vào ở. Chủ trọ sẽ hỗ trợ bạn làm thủ tục **đăng ký tạm trú** đầy đủ theo đúng quy định của địa phương.`;
 
     case 'pet':
       return `Nhà trọ **không cho phép nuôi thú cưng** (chó, mèo, chim cảnh...) trong phòng.\n\nLý do: để giữ vệ sinh chung và tránh mùi hôi, tiếng ồn ảnh hưởng đến các phòng xung quanh.\n\nCảm ơn bạn đã hợp tác và tuân thủ nội quy!`;

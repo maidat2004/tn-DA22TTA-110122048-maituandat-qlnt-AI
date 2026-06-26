@@ -141,7 +141,10 @@ export default function RequestManagement() {
     return priorityMap[priority] || priority || 'Bình thường';
   };
 
-  const getTypeText = (type) => {
+  const getTypeText = (type, title = '') => {
+    if (title && title.toLowerCase().includes('thuê phòng')) {
+      return '🚪 Duyệt thuê phòng';
+    }
     const typeMap = {
       repair: '🔧 Sửa chữa',
       complaint: '💬 Phàn nàn',
@@ -170,7 +173,7 @@ export default function RequestManagement() {
             <h1 className="text-3xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
               Quản Lý Yêu Cầu
             </h1>
-            <p className="text-gray-600">Xử lý yêu cầu cập nhật thông tin từ sinh viên</p>
+            <p className="text-gray-600">Phê duyệt yêu cầu thuê phòng, sửa chữa, dịch vụ và hỗ trợ khách thuê</p>
           </div>
         </div>
         <Button
@@ -327,7 +330,7 @@ export default function RequestManagement() {
                       <div className="ml-13">
                         <div className="flex flex-wrap gap-2 mb-2">
                           <Badge variant="outline" className="text-xs">
-                            {getTypeText(request.type)}
+                            {getTypeText(request.type, request.title)}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
                             {getPriorityText(request.priority)}
@@ -402,7 +405,7 @@ export default function RequestManagement() {
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                       <p className="text-sm text-gray-600 mb-2">Loại yêu cầu:</p>
-                      <Badge variant="outline">{getTypeText(selectedRequest.type)}</Badge>
+                      <Badge variant="outline">{getTypeText(selectedRequest.type, selectedRequest.title)}</Badge>
                       <Badge variant="outline" className="ml-2">{getPriorityText(selectedRequest.priority)}</Badge>
                     </div>
                   </div>

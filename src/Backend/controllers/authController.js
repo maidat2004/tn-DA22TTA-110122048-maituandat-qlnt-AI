@@ -80,6 +80,8 @@ export const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone || '',
+        avatar: user.avatar || '',
         role: user.role,
         tenantId: user.tenantId?._id,
         mustChangePassword: user.mustChangePassword || false,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts';
 import { useAuth } from './hooks';
@@ -155,6 +156,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <Toaster position="top-right" richColors />
         <AppRoutes />
       </Router>
     </AuthProvider>

@@ -82,48 +82,34 @@ export default function InvoiceManagement() {
       
       if (hasInvoiceThisMonth) continue;
       
-      // Get last paid invoice
-      const paidInvoices = invoicesData
-        .filter(inv => inv.tenant?._id === tenant._id && inv.status === 'paid' && inv.paidDate)
-        .sort((a, b) => new Date(b.paidDate) - new Date(a.paidDate));
-      
+      // Check if this is the first month for this tenant
+      const hasAnyInvoice = invoicesData.some(inv => inv.tenant?._id === tenant._id);
+      const moveIn = tenant.moveInDate ? new Date(tenant.moveInDate) : null;
+      const isFirstMonth = !hasAnyInvoice && moveIn && 
+        moveIn.getFullYear() === currentYear && 
+        (moveIn.getMonth() + 1) === currentMonth;
+
       let dueDate;
       let reason;
       let priority = 'medium';
-      
-      if (paidInvoices.length > 0) {
-        const lastPaidDate = new Date(paidInvoices[0].paidDate);
-        dueDate = lastPaidDate.getDate();
-        reason = `Đã thanh toán HĐ trước ngày ${lastPaidDate.getDate()}/${lastPaidDate.getMonth() + 1}`;
+
+      if (isFirstMonth) {
+        const dueDateObj = new Date(moveIn);
+        dueDateObj.setDate(dueDateObj.getDate() + 3);
         
-        // Check if passed due date
-        const daysDiff = today - dueDate;
-        if (daysDiff >= 0) {
-          priority = 'high';
-          reason = `⏰ Đến hạn (HĐ trước: ${lastPaidDate.getDate()}/${lastPaidDate.getMonth() + 1})`;
-        }
-      } else if (tenant.moveInDate) {
-        const moveIn = new Date(tenant.moveInDate);
-        dueDate = moveIn.getDate();
-        reason = `Ngày vào: ${moveIn.getDate()}/${moveIn.getMonth() + 1}/${moveIn.getFullYear()}`;
-        
-        // Check if passed due date
-        const daysDiff = today - dueDate;
-        if (daysDiff >= 0) {
-          priority = 'high';
-          reason = `⏰ Đến hạn (Ngày vào: ${moveIn.getDate()}/${moveIn.getMonth() + 1})`;
-        }
+        dueDate = dueDateObj.getDate();
+        const dueDateStr = `${dueDateObj.getDate()}/${dueDateObj.getMonth() + 1}`;
+        priority = today >= dueDate ? 'high' : 'medium';
+        reason = priority === 'high'
+          ? `⏰ Đến hạn tạo HĐ (3 ngày sau dọn vào: ${dueDateStr})`
+          : `Hạn thanh toán tháng đầu: ${dueDateStr}`;
       } else {
-        dueDate = 1;
-        reason = 'Chưa có lịch sử thanh toán';
-        priority = 'high';
+        dueDate = 5;
+        priority = today >= dueDate ? 'high' : 'medium';
+        reason = priority === 'high'
+          ? 'Đến hạn tạo hóa đơn theo quy định ngày 5 hàng tháng'
+          : 'Hạn thanh toán cố định ngày 5 hàng tháng';
       }
-      
-      dueDate = 5;
-      priority = today >= dueDate ? 'high' : 'medium';
-      reason = priority === 'high'
-        ? 'Đến hạn tạo hóa đơn theo quy định ngày 5 hàng tháng'
-        : 'Hạn thanh toán cố định ngày 5 hàng tháng';
 
       // Always add if no invoice this month
       reminderList.push({
@@ -245,10 +231,11 @@ export default function InvoiceManagement() {
       moveIn &&
       !Number.isNaN(moveIn.getTime()) &&
       moveIn.getFullYear() === year &&
-      moveIn.getMonth() === monthIndex &&
-      moveIn.getDate() > 5
+      moveIn.getMonth() === monthIndex
     ) {
-      return formatDateInput(moveIn);
+      const dueDateObj = new Date(moveIn);
+      dueDateObj.setDate(dueDateObj.getDate() + 3);
+      return formatDateInput(dueDateObj);
     }
 
     const dueDay = Math.min(5, getDaysInMonth(year, monthIndex));

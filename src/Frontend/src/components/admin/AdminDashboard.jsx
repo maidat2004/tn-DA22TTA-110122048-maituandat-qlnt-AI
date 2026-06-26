@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -133,6 +134,7 @@ function EmptyChart({ message }) {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [rawData, setRawData] = useState({
     rooms: [],
     tenants: [],
@@ -479,7 +481,11 @@ export default function AdminDashboard() {
           {dashboard.recentRequests.length > 0 ? (
             <div className="space-y-3">
               {dashboard.recentRequests.map((request) => (
-                <div key={request._id} className="flex items-center justify-between gap-4 border border-gray-100 rounded-lg p-3">
+                <div
+                  key={request._id}
+                  onClick={() => navigate('/admin/yeu-cau')}
+                  className="flex items-center justify-between gap-4 border border-gray-100 rounded-lg p-3 cursor-pointer hover:bg-gray-50 hover:border-blue-200 transition-all duration-200"
+                >
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{request.title}</p>
                     <p className="text-sm text-gray-500 truncate">

@@ -5784,3 +5784,21 @@ body a.public-cta.public-cta-light:focus {
   background: #eef2ff !important;
   color: #3730a3 !important;
 }
+
+/* Fix missing Tailwind spacing-5 utilities */
+.p-5 {
+  padding: 1.25rem !important;
+}
+.pt-5 {
+  padding-top: 1.25rem !important;
+}
+.px-5 {
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+.gap-5 {
+  gap: 1.25rem !important;
+}
+.mt-5 {
+  margin-top: 1.25rem !important;
+}

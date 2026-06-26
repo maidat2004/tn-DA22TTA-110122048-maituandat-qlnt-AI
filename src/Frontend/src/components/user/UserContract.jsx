@@ -150,15 +150,7 @@ export default function UserContract() {
           <CardContent className="p-12 text-center">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Chưa có hợp đồng</h3>
-            <p className="text-gray-600 mb-4">Bạn chưa có hợp đồng nào. Vui lòng liên hệ quản lý để được ký hợp đồng.</p>
-            <div className="text-xs text-gray-400 mt-4 p-3 bg-gray-50 rounded">
-              <p className="font-mono">Debug Info:</p>
-              <p className="font-mono">User _id: {user?._id || 'Không có'}</p>
-              <p className="font-mono">User id: {user?.id || 'Không có'}</p>
-              <p className="font-mono">Email: {user?.email || 'Không có'}</p>
-              <p className="font-mono">Name: {user?.name || 'Không có'}</p>
-              <p className="mt-2">Mở Console (F12) để xem log chi tiết</p>
-            </div>
+            <p className="text-gray-600">Bạn chưa có hợp đồng nào. Vui lòng liên hệ quản lý để được ký hợp đồng.</p>
           </CardContent>
         </Card>
       </div>

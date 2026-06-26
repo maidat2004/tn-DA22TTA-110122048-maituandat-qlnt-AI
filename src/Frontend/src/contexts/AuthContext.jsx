@@ -9,9 +9,27 @@ export function AuthProvider({ children }) {
 
   // Restore session on mount
   useEffect(() => {
-    const session = authService.getSession();
-    setUser(session);
-    setIsLoading(false);
+    const initAuth = async () => {
+      const session = authService.getSession();
+      if (session) {
+        setUser(session);
+        try {
+          const freshUser = await authService.getMe();
+          if (freshUser) {
+            // Ensure user has _id property (for backward compatibility)
+            if (freshUser.id && !freshUser._id) {
+              freshUser._id = freshUser.id;
+            }
+            setUser(freshUser);
+          }
+        } catch (err) {
+          console.warn('Không thể đồng bộ thông tin user từ server:', err);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = async (credentials) => {

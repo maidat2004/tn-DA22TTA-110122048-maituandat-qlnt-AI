@@ -55,6 +55,14 @@ export default function LoginPage() {
           return;
         }
 
+        // Kiểm tra định dạng số điện thoại
+        const phoneRegex = /^0\d{9}$/;
+        if (!phoneRegex.test(formData.phone)) {
+          setError('Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.');
+          setLoading(false);
+          return;
+        }
+
         // Gọi API đăng ký
         await authService.register({
           name: formData.fullName,

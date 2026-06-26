@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks';
 import { tenantService, authService } from '../../services';
@@ -14,6 +14,11 @@ import { occupationOptions, vietnamProvinceOptions } from '../../constants/profi
 export default function UserProfile() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const maxDobDate = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split('T')[0];
+  }, []);
   const [tenantInfo, setTenantInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,30 +49,45 @@ export default function UserProfile() {
   }, [user]);
 
   const loadTenantInfo = async () => {
-    if (!user?.tenantId) {
+    const tenantIdStr = user?.tenantId?._id || user?.tenantId;
+    const userId = user?.id || user?._id;
+
+    if (!tenantIdStr && !userId) {
       setLoading(false);
       return;
     }
 
     try {
-      const data = await tenantService.getTenant(user.tenantId);
-      setTenantInfo(data);
+      let data = null;
+      // Try to fetch by user ID first if possible since getTenantByUser is extremely robust
+      if (userId) {
+        data = await tenantService.getTenantByUser(userId);
+      }
       
-      // Populate edit form
-      setEditForm({
-        fullName: data.fullName || '',
-        phone: data.phone || '',
-        email: data.email || '',
-        idCard: data.idCard || '',
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : '',
-        hometown: data.hometown || '',
-        currentAddress: data.currentAddress || '',
-        occupation: data.occupation || '',
-        school: data.school || '',
-        emergencyContact: data.emergencyContact?.name || '',
-        emergencyPhone: data.emergencyContact?.phone || '',
-        relationship: data.emergencyContact?.relationship || ''
-      });
+      // Fallback to getTenant if not found
+      if (!data && tenantIdStr) {
+        data = await tenantService.getTenant(tenantIdStr);
+      }
+
+      if (data) {
+        setTenantInfo(data);
+        
+        // Populate edit form
+        setEditForm({
+          fullName: data.fullName || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          idCard: data.idCard || '',
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : '',
+          hometown: data.hometown || '',
+          currentAddress: data.currentAddress || '',
+          occupation: data.occupation || '',
+          school: data.school || '',
+          emergencyContact: data.emergencyContact?.name || '',
+          emergencyPhone: data.emergencyContact?.phone || '',
+          relationship: data.emergencyContact?.relationship || ''
+        });
+      }
     } catch (err) {
       setError('Không thể tải thông tin người thuê');
       console.error(err);
@@ -97,6 +117,33 @@ export default function UserProfile() {
   };
 
   const handleSaveChanges = async () => {
+    // Validation
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(editForm.phone)) {
+      toast.error('Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.');
+      return;
+    }
+
+    if (editForm.emergencyPhone && !phoneRegex.test(editForm.emergencyPhone)) {
+      toast.error('Số điện thoại khẩn cấp phải gồm 10 chữ số và bắt đầu bằng số 0.');
+      return;
+    }
+
+    if (editForm.dateOfBirth) {
+      const dob = new Date(editForm.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      
+      if (age < 18) {
+        toast.error('Bạn phải từ đủ 18 tuổi trở lên mới được phép đăng ký thuê trọ.');
+        return;
+      }
+    }
+
     try {
       // Destructure fields to separate emergency contact details
       const { email, emergencyContact: emergencyName, emergencyPhone, relationship, ...updateData } = editForm;
@@ -207,7 +254,7 @@ export default function UserProfile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="border-b pb-3">
             <label className="text-sm font-medium text-gray-500">ID Tài khoản</label>
-            <p className="text-gray-800 mt-1 font-mono text-sm">{user?.id || 'N/A'}</p>
+            <p className="text-gray-800 mt-1 font-mono text-sm">{user?.id || user?._id || 'N/A'}</p>
           </div>
           <div className="border-b pb-3">
             <label className="text-sm font-medium text-gray-500">Tên người dùng</label>
@@ -379,6 +426,7 @@ export default function UserProfile() {
                     type="date"
                     value={editForm.dateOfBirth}
                     onChange={(e) => setEditForm({...editForm, dateOfBirth: e.target.value})}
+                    max={maxDobDate}
                   />
                 </div>
 

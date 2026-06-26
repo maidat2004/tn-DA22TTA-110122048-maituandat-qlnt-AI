@@ -124,6 +124,11 @@ export default function ManagementLayout({
                   </div>
 
                   <span className="flex-1 font-medium">{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 mr-2 shadow-sm animate-pulse">
+                      {item.badge}
+                    </span>
+                  )}
                   <ChevronRight
                     className={`w-4 h-4 transition-all duration-200 ${
                       active ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0'

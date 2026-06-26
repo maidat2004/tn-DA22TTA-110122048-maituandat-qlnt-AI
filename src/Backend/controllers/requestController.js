@@ -1,4 +1,6 @@
 import Request from '../models/Request.js';
+import Tenant from '../models/Tenant.js';
+import Room from '../models/Room.js';
 
 // @desc    Get all requests
 // @route   GET /api/requests
@@ -108,6 +110,45 @@ export const updateRequest = async (req, res) => {
       });
     }
 
+    // Auto-assign room when request is resolved
+    if (request.status === 'resolved' && request.room && request.tenant) {
+      const tenant = await Tenant.findById(request.tenant);
+      if (tenant) {
+        const oldRoomId = tenant.room ? tenant.room.toString() : null;
+        const newRoomId = request.room.toString();
+
+        if (oldRoomId !== newRoomId) {
+          // Remove tenant from old room
+          if (oldRoomId) {
+            const oldRoom = await Room.findById(oldRoomId);
+            if (oldRoom) {
+              oldRoom.currentTenants = oldRoom.currentTenants.filter(
+                t => t.toString() !== tenant._id.toString()
+              );
+              if (oldRoom.currentTenants.length === 0) {
+                oldRoom.status = 'available';
+              }
+              await oldRoom.save();
+            }
+          }
+
+          // Assign new room to tenant
+          tenant.room = request.room;
+          await tenant.save();
+
+          // Add tenant to new room
+          const newRoom = await Room.findById(newRoomId);
+          if (newRoom) {
+            if (!newRoom.currentTenants.includes(tenant._id)) {
+              newRoom.currentTenants.push(tenant._id);
+            }
+            newRoom.status = 'occupied';
+            await newRoom.save();
+          }
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: request
@@ -192,6 +233,45 @@ export const resolveRequest = async (req, res) => {
     request.resolvedBy = req.user.id;
 
     await request.save();
+
+    // Auto-assign room when request is resolved
+    if (request.status === 'resolved' && request.room && request.tenant) {
+      const tenant = await Tenant.findById(request.tenant);
+      if (tenant) {
+        const oldRoomId = tenant.room ? tenant.room.toString() : null;
+        const newRoomId = request.room.toString();
+
+        if (oldRoomId !== newRoomId) {
+          // Remove tenant from old room
+          if (oldRoomId) {
+            const oldRoom = await Room.findById(oldRoomId);
+            if (oldRoom) {
+              oldRoom.currentTenants = oldRoom.currentTenants.filter(
+                t => t.toString() !== tenant._id.toString()
+              );
+              if (oldRoom.currentTenants.length === 0) {
+                oldRoom.status = 'available';
+              }
+              await oldRoom.save();
+            }
+          }
+
+          // Assign new room to tenant
+          tenant.room = request.room;
+          await tenant.save();
+
+          // Add tenant to new room
+          const newRoom = await Room.findById(newRoomId);
+          if (newRoom) {
+            if (!newRoom.currentTenants.includes(tenant._id)) {
+              newRoom.currentTenants.push(tenant._id);
+            }
+            newRoom.status = 'occupied';
+            await newRoom.save();
+          }
+        }
+      }
+    }
 
     res.json({
       success: true,

@@ -99,16 +99,15 @@ export default function ChatbotWidget() {
                 return (
                 <div key={message.id} className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`whitespace-pre-line break-words rounded-2xl px-4 py-2 text-sm leading-relaxed ${
-                      isUser
-                        ? 'border border-blue-100 bg-gray-100 text-gray-900'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
+                    className="whitespace-pre-line break-words rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-sm"
                     style={{
                       maxWidth: isUser ? '82%' : '88%',
                       minWidth: isUser ? '120px' : undefined,
                       overflowWrap: 'anywhere',
-                      wordBreak: 'normal'
+                      wordBreak: 'normal',
+                      backgroundColor: isUser ? '#2563eb' : '#f3f4f6',
+                      color: isUser ? '#ffffff' : '#1f2937',
+                      fontWeight: isUser ? '500' : 'normal'
                     }}
                   >
                     {message.text}

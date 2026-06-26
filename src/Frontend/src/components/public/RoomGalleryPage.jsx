@@ -38,6 +38,12 @@ const normalizeImageUrl = (imageUrl) => {
 };
 
 export default function RoomGalleryPage() {
+  const maxDobDate = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -70,7 +76,8 @@ export default function RoomGalleryPage() {
   const checkUserTenant = async (userId) => {
     if (!userId) return null;
     try {
-      const tenant = await tenantService.getTenantByUser(userId);
+      const response = await tenantService.getTenantByUser(userId);
+      const tenant = response?.data || response;
       setUserTenant(tenant);
       return tenant;
     } catch (error) {
@@ -170,6 +177,33 @@ export default function RoomGalleryPage() {
     minDate.setDate(minDate.getDate() - 5);
     minDate.setHours(0, 0, 0, 0);
     
+    // Validation
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(rentForm.phone)) {
+      toast.error('Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.');
+      return;
+    }
+
+    if (rentForm.emergencyPhone && !phoneRegex.test(rentForm.emergencyPhone)) {
+      toast.error('Số điện thoại khẩn cấp phải gồm 10 chữ số và bắt đầu bằng số 0.');
+      return;
+    }
+
+    if (rentForm.dateOfBirth) {
+      const dob = new Date(rentForm.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      
+      if (age < 18) {
+        toast.error('Bạn phải từ đủ 18 tuổi trở lên mới được phép đăng ký thuê trọ.');
+        return;
+      }
+    }
+
     if (selectedDate < minDate) {
       toast.error('Ngày chuyển vào không được trước quá 5 ngày so với ngày hiện tại.');
       return;
@@ -197,11 +231,12 @@ export default function RoomGalleryPage() {
         };
 
         const regResult = await tenantService.registerTenant(tenantPayload);
-        if (regResult.success) {
-          tenantId = regResult.data._id;
-          setUserTenant(regResult.data);
+        const tenantData = regResult?.data || regResult;
+        if (tenantData && tenantData._id) {
+          tenantId = tenantData._id;
+          setUserTenant(tenantData);
         } else {
-          throw new Error(regResult.message || 'Không thể đăng ký hồ sơ người thuê.');
+          throw new Error(regResult?.message || 'Không thể đăng ký hồ sơ người thuê.');
         }
       }
 
@@ -776,7 +811,7 @@ export default function RoomGalleryPage() {
                             required
                             value={rentForm.dateOfBirth}
                             onChange={(e) => setRentForm({ ...rentForm, dateOfBirth: e.target.value })}
-                            max={new Date().toISOString().split('T')[0]}
+                            max={maxDobDate}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           />
                         </div>
@@ -912,14 +947,58 @@ export default function RoomGalleryPage() {
                 <button
                   type="button"
                   onClick={() => { setShowRentModal(false); setRentRoom(null); }}
-                  className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-100 transition-colors"
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    border: '1px solid #d9d9d9',
+                    backgroundColor: '#ffffff',
+                    color: '#434343',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '90px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    e.currentTarget.style.borderColor = '#d9d9d9';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.borderColor = '#d9d9d9';
+                  }}
                   disabled={submitting}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2"
+                  style={{
+                    padding: '8px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#1677ff',
+                    color: '#ffffff',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 2px 4px rgba(22, 119, 255, 0.2)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#4096ff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1677ff';
+                  }}
                   disabled={submitting}
                 >
                   {submitting ? (

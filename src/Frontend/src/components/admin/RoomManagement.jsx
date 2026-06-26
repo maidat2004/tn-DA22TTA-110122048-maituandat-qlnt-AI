@@ -125,6 +125,7 @@ export default function RoomManagement() {
       electricPrice: 0,
       waterPrice: 0
     });
+    setSelectedImages([null, null, null, null, null]);
     setIsDialogOpen(true);
   };
 
@@ -224,22 +225,41 @@ export default function RoomManagement() {
     if (!editingRoom) return;
 
     try {
+      setUploadingImages(true);
+      const filesToUpload = selectedImages.filter(img => img !== null && img !== undefined);
+      
       if (editingRoom._id) {
         // Update existing room
         await roomService.updateRoom(editingRoom._id, editingRoom);
-        toast.success('✅ Cập nhật phòng thành công!');
+        
+        // Upload images if selected
+        if (filesToUpload.length > 0) {
+          await roomService.uploadRoomImages(editingRoom._id, filesToUpload);
+        }
+        
+        toast.success('✅ Cập nhật phòng và tải ảnh thành công!');
       } else {
         // Create new room
-        await roomService.createRoom(editingRoom);
-        toast.success('🎉 Thêm phòng thành công!');
+        const result = await roomService.createRoom(editingRoom);
+        const newRoomId = result.data?._id;
+        
+        // Upload images if selected
+        if (filesToUpload.length > 0 && newRoomId) {
+          await roomService.uploadRoomImages(newRoomId, filesToUpload);
+        }
+        
+        toast.success('🎉 Thêm phòng và tải ảnh thành công!');
       }
       
       setIsDialogOpen(false);
       setEditingRoom(null);
+      setSelectedImages([null, null, null, null, null]);
       await loadRooms(); // Reload rooms
     } catch (error) {
       toast.error(error.message || 'Không thể lưu thông tin phòng');
       console.error('Error saving room:', error);
+    } finally {
+      setUploadingImages(false);
     }
   };
 
@@ -464,10 +484,12 @@ export default function RoomManagement() {
                   )}
 
 
-                  {editingRoom?._id && (editingRoom?.images?.length || 0) < 5 && (
+                  {(!editingRoom?._id || (editingRoom?.images?.length || 0) < 5) && (
                     <div className="space-y-4">
                       <p className="text-sm font-medium text-gray-700">
-                        Thêm ảnh mới ({5 - (editingRoom?.images?.length || 0)} vị trí còn trống):
+                        {editingRoom?._id 
+                          ? `Thêm ảnh mới (${5 - (editingRoom?.images?.length || 0)} vị trí còn trống):`
+                          : 'Chọn ảnh phòng (Tối đa 5 ảnh):'}
                       </p>
                       
                       {/* Image Upload Slots */}
@@ -519,7 +541,7 @@ export default function RoomManagement() {
                       </div>
 
                       {/* Upload Button */}
-                      {selectedImages.some(img => img !== null && img !== undefined) && (
+                      {editingRoom?._id && selectedImages.some(img => img !== null && img !== undefined) && (
                         <div className="flex justify-center pt-2">
                           <Button
                             type="button"
@@ -538,20 +560,14 @@ export default function RoomManagement() {
                       </p>
                     </div>
                   )}
-
-                  {!editingRoom?._id && (
-                    <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
-                      ⚠️ Vui lòng lưu phòng trước, sau đó chỉnh sửa lại để upload ảnh
-                    </p>
-                  )}
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={uploadingImages}>
                     Hủy
                   </Button>
-                  <Button type="submit">
-                    {editingRoom?._id ? 'Cập nhật' : 'Xác nhận'}
+                  <Button type="submit" disabled={uploadingImages}>
+                    {uploadingImages ? 'Đang lưu & tải ảnh...' : (editingRoom?._id ? 'Cập nhật' : 'Xác nhận')}
                   </Button>
                 </div>
               </form>
